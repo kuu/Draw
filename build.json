@@ -1,0 +1,33 @@
+{
+  "defaultTarget": "all",
+  "properties": {
+    "sourceDir": "src",
+    "buildDir": "build",
+    "binDir": "bin",
+    "vendorDir": "vendor"
+  },
+  "resources": {
+    "Geometry": {
+      "type": "package",
+      "location": "git",
+      "url": "git://github.com/BenriJS/Geometry.git"
+    }
+  },
+  "plugins": {},
+  "targets": {
+    "all": {
+      "builder": "js",
+      "resources": [
+        {
+          "type": "reference",
+          "name": "Geometry"
+        },
+        {
+          "type": "files",
+          "root": "${sourceDir}",
+          "include": "\\.js$"
+        }
+      ]
+    }
+  }
+}
