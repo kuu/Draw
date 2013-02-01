@@ -8,11 +8,23 @@
 (function(global) {
 
   /**
+   * A class to work with colours easily.
    * @class
    * @extends {Number}
    */
   var Color = (function(pSuper) {
+    /**
+     * @constructor
+     * @param {number} pRed   Red value from 0 to 255.
+     * @param {number} pGreen Green value from 0 to 255.
+     * @param {number} pBlue  Blue value from 0 to 255.
+     * @param {number} pAlpha Alpha value from 0 to 255.
+     */
     function Color(pRed, pGreen, pBlue, pAlpha) {
+      /**
+       * The colour itself is stored as a single number.
+       * @type {number}
+       */
       this.value =
         ((pRed ? pRed << 24 : 0) +
         (pGreen ? pGreen << 16 : 0) +
@@ -23,14 +35,24 @@
     Color.prototype = Object.create(pSuper.prototype);
     Color.prototype.constructor = Color;
 
+    /**
+     * @inheritDoc
+     */
     Color.prototype.valueOf = function() {
       return this.value;
     };
 
+    /**
+     * @inheritDoc
+     */
     Color.prototype.toString = function() {
       return pSuper.prototype.toString.apply(this.value, arguments);
     }
 
+    /**
+     * Get the CSS String representation of this colour.
+     * @return {string} The CSS String representation of this colour.
+     */
     Color.prototype.toCSSString = function() {
       var tValue = this.value;
       return 'rgba(' +
@@ -40,6 +62,13 @@
         ((tValue & 0xFF) / 255) + ')';
     };
 
+    /**
+     * Sets this Color to the specified values.
+     * @param {number} pRed   The red value.
+     * @param {number} pGreen The green value.
+     * @param {number} pBlue  The blue value.
+     * @param {number} pAlpha The alpha value.
+     */
     Color.prototype.setRGBA = function(pRed, pGreen, pBlue, pAlpha) {
       this.value =
         ((pRed ? pRed << 24 : 0) +
@@ -48,6 +77,11 @@
         (pAlpha ? pAlpha : 0)) >>> 0;
     };
 
+    /**
+     * Gets the red, green, blue and alpha components of
+     * this Color separately.
+     * @return {Array.<number>} An array of size 4 that contains each of the colour channels.
+     */
     Color.prototype.getRGBA = function() {
       var tValue = this.value;
       return [

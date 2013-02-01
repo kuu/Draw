@@ -19,40 +19,104 @@
   benri.draw.Canvas = Canvas;
 
   /**
+   * A class for drawing 2D bitmaps on to a surface.
+   * @class
    * @constructor
    * @param {number} pWidth  The width of the canvas.
    * @param {number} pHeight The height of the canvas.
    */
   function Canvas(pWidth, pHeight) {
+    /**
+     * The width of this Canvas in pixels.
+     * @type {number}
+     */
     this.width = pWidth;
+
+    /**
+     * The height of this Canvas in pixels.
+     * @type {number}
+     */
     this.height = pHeight;
+
+    /**
+     * The transformation matrix of this Canvas.
+     * @type {benri.geometry.Matrix2D}
+     */
     this.matrix = new Matrix();
-    this._clip = null;
+
+    /**
+     * The stack used in save and restore calls.
+     * @private
+     * @type {Array}
+     */
     this._stack = [];
+
+    /**
+     * The current draw command records that have
+     * yet to be flushed to the surface.
+     * @type {Array}
+     */
     this.records = [];
+
+    /**
+     * The Surface of this Canvas.
+     * @type {benri.draw.Surface}
+     */
     this.surface = null;
-    this._lastPath = null;
-    this._lastPaint = null;//TODO
+
+    /**
+     * Holds the last used matrix.
+     * @private
+     * @type {benri.geometry.Matrix2D}
+     */
     this._lastMatrix = this.matrix.clone();
+
+    /**
+     * Holds the states of each layer in the Canvas.
+     * @private
+     * @type {Array}
+     */
     this._layerStates = [];
   }
 
+  /**
+   * The defaultSurface class to be used
+   * when a specific surface was not specified
+   * to be used.
+   * @type {function(new:benri.draw.Surface)}
+   */
   Canvas.defaultSurface = null;
 
+  /**
+   * Sets the surface for this Canvas
+   * @param {benri.draw.Surface} pSurface The Surface.
+   */
   Canvas.prototype.setSurface = function(pSurface) {
     this.surface = pSurface;
   };
 
+  /**
+   * Copies records from one array to the other.
+   */
   function copyRecords(pSrc, pDest) {
     for (var i = 0, il = pSrc.length; i < il; i++) {
       pDest.push(pSrc[i]);
     }
   }
 
+  /**
+   * Returns true if the this Canvas is dirty and needs to be flushed.
+   * @return {boolean}
+   */
   Canvas.prototype.isDirty = function() {
     return this.records.length !== 0;
   };
 
+  /**
+   * If the current matrix has not yet been
+   * added as a record for the surface, add it now.
+   * @private
+   */
   Canvas.prototype._syncMatrix = function() {
     if (!this.matrix.equals(this._lastMatrix)) {
       this.records.push({
@@ -64,6 +128,11 @@
     }
   };
 
+  /**
+   * Fill the given Path with the given Style.
+   * @param  {benri.geometry.Path} pPath  The Path to fill.
+   * @param  {benri.draw.Style} pStyle The Style to use to fill.
+   */
   Canvas.prototype.fillPath = function(pPath, pStyle) {
     var tRecords = this.records;
 
@@ -81,6 +150,11 @@
     });
   };
 
+  /**
+   * Stroke the given Path with the given StrokeStyle.
+   * @param  {benri.geometry.Path} pPath The Path to stroke.
+   * @param  {benri.draw.StrokeStyle} pStrokeStyle The StrokeStyle to use to stroke.
+   */
   Canvas.prototype.strokePath = function(pPath, pStrokeStyle) {
     var tRecords = this.records;
 
@@ -98,14 +172,31 @@
     });
   };
 
+  /**
+   * Fill the given Rect with the given Style.
+   * @param  {benri.geometry.Rect} pRect  The Rect to fill.
+   * @param  {benri.draw.Style} pStyle The Style to use to fill.
+   */
   Canvas.prototype.fillRect = function(pRect, pStyle) {
     this.fillPath(pRect.getPath(), pStyle);
   };
 
+  /**
+   * Stroke the given Rect with the given StrokeStyle.
+   * @param  {benri.geometry.Rect} pRect  The Rect to stroke.
+   * @param  {benri.draw.StrokeStyle} pStrokeStyle The StrokeStyle to use to stroke.
+   */
   Canvas.prototype.strokeRect = function(pRect, pStrokeStyle) {
     this.strokePath(pRect.getPath(), pStrokeStyle);
   };
 
+  /**
+   * Draws the given bitmap to this Canvas using the given Style
+   * @param  {object} pBitmap The bitmap to draw.
+   * @param  {number=0} pDestX  The x coordinate to start the draw at.
+   * @param  {number=0} pDestY  The y coordinate to start the draw at.
+   * @param  {benri.draw.Style} pStyle  The Style to use to draw the bitmap.
+   */
   Canvas.prototype.drawBitmap = function(pBitmap, pDestX, pDestY, pStyle) {
     this._syncMatrix();
     this.records.push({
@@ -116,6 +207,14 @@
     });
   };
 
+  /**
+   * Draws the given bitmap to this Canvas using the given Style
+   * at the given position.
+   * @param  {object} pBitmap The bitmap to draw.
+   * @param  {benri.geometry.Rect} pDestRect  The destination on this Canvas to draw to.
+   * @param  {benri.geometry.Rect} pSourceRect  The source rect to sample from to draw to the Canvas.
+   * @param  {benri.draw.Style} pStyle  The Style to use to draw the bitmap.
+   */
   Canvas.prototype.drawBitmapWithRects = function(pBitmap, pDestRect, pSourceRect, pStyle) {
     this._syncMatrix();
     this.records.push({
@@ -127,10 +226,10 @@
     });
   };
 
-  Canvas.prototype.setClip = function(pPath) {
-
-  };
-
+  /**
+   * Draws text to the Canvas.
+   * @todo  Not implemented fully yet.
+   */
   Canvas.prototype.drawText = function(pText, pTextStyle) {
     this._syncMatrix();
     this.records.push(
@@ -142,6 +241,10 @@
     );
   };
 
+  /**
+   * Clears the Canvas with the given Color.
+   * @param  {benri.draw.Color} pColor The Color to clear with.
+   */
   Canvas.prototype.clear = function(pColor) {
     if (this.surface !== null) {
       this.surface.clearRecords();
@@ -157,6 +260,9 @@
     });
   };
 
+  /**
+   * Flush the drawing records of this Canvas to the underlying Surface.
+   */
   Canvas.prototype.flush = function() {
     var tSurface = this.surface;
 
@@ -177,6 +283,13 @@
     this.records.length = 0;
   };
 
+  /**
+   * Gets a bitmap representation of this Canvas.
+   * When this is called, all draw commands must
+   * be flushed first so that the bitmap returned
+   * is a representation of the current draw records.
+   * @return {object} The bitmap.
+   */
   Canvas.prototype.getBitmap = function() {
     this.flush();
 
@@ -187,13 +300,24 @@
     return this.surface.getBitmap();
   };
 
+  /**
+   * Saves the current state of this Canvas.
+   * Currently this only saves the current matrix.
+   */
   Canvas.prototype.save = function() {
     this._stack.push({
-      matrix: this.matrix.clone(),
-      clip: this.clip ? this.clip.clone() : null
+      matrix: this.matrix.clone()
     });
   };
 
+  /**
+   * Enter a new layer in this Canvas.
+   * A layer will give you a clean Canvas to work with
+   * with the same matrix applied to it.
+   * When you want to draw this layer to the main
+   * Canvas or a parent layer, call leaveLayer.
+   * @param  {benri.geometry.Rect=} pRect The size and position of the layer.
+   */
   Canvas.prototype.enterLayer = function(pRect) {
     this._syncMatrix();
 
@@ -206,25 +330,29 @@
     });
 
     this._layerStates.push({
-      matrix: this.matrix.clone(),
-      clip: this.clip ? this.clip.clone() : null
+      matrix: this.matrix.clone()
     });
   };
 
+  /**
+   * Leaves the current layer and draws it to the
+   * parent layer or actual Canvas.
+   */
   Canvas.prototype.leaveLayer = function() {
     var tState = this._layerStates.pop();
     this.matrix = tState.matrix;
-    this.clip = tState.clip;
 
     this.records.push({
       type: 'endLayer'
     });
   };
 
+  /**
+   * Restores a state previously saved by a call to save.
+   */
   Canvas.prototype.restore = function() {
     var tState = this._stack.pop();
     this.matrix = tState.matrix;
-    this.clip = tState.clip;
   };
 
 }(this));

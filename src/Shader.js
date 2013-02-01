@@ -10,9 +10,16 @@
   global.benri.draw.Shader = Shader;
 
   /**
-   * @constructor
+   * Base class for all Shaders.
+   * @class
    */
   function Shader() {
+    /**
+     * The tiling mode of this shader.
+     * In other words, what to do when you attempt to
+     * shade outside the limits this shader defines.
+     * @type {string=none}
+     */
     this.tileMode = 'none';
   }
 

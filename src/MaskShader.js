@@ -8,12 +8,23 @@
 (function(global) {
 
   /**
+   * A shader that will mask the contents being rendered
+   * using the bitmap supplied in the constructor
    * @class
    * @extends {benri.draw.Shader}
    */
   var MaskShader = (function(pSuper) {
+    /**
+     * @constructor
+     * @param {object} pBitmap The bitmap to use as the mask
+     */
     function MaskShader(pBitmap) {
       pSuper.call(this);
+
+      /**
+       * The bitmap to use as the mask.
+       * @type {object}
+       */
       this.bitmap = pBitmap;
     }
 

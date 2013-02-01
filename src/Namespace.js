@@ -8,5 +8,9 @@
 this.benri = this.benri || {};
 
 benri.draw = {
+  /**
+   * The place to put all platform specific code.
+   * @type {object}
+   */
   platform: {}
 };

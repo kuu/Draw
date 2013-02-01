@@ -6,12 +6,22 @@
  */
 
 /**
+ * A shader that simply colours what is being drawn.
  * @class
  * @extends {benri.draw.Shader}
  */
 benri.draw.ColorShader = (function(pSuper) {
+  /**
+   * @constructor
+   * @param {benri.draw.Color} pColor The Color to shade with.
+   */
   function ColorShader(pColor) {
     pSuper.call(this);
+
+    /**
+     * The Color to shade with
+     * @type {benri.draw.Color}
+     */
     this.color = pColor;
   }
 
