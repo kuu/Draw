@@ -51,9 +51,6 @@
       }
 
       this.records = this.records.concat(pRecords);
-
-      // TODO: Make this MUCH more efficient
-      this.generateDrawFunction();
     };
 
     HTMLCanvasSurface.prototype.clearRecords = function() {
@@ -63,6 +60,11 @@
     };
 
     HTMLCanvasSurface.prototype.flush = function() {
+      // TODO: Make this MUCH more efficient
+      if (this.drawFunction === null) {
+        this.generateDrawFunction();
+      }
+
       if (this.drawFunction !== null) {
         this.drawFunction(this.context);
       }
