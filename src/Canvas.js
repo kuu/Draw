@@ -228,17 +228,48 @@
 
   /**
    * Draws text to the Canvas.
-   * @todo  Not implemented fully yet.
+   * @param  {string} pText The text to draw.
+   * @param  {benri.draw.TextStyle} pStyle  The Style to use to draw the text.
    */
-  Canvas.prototype.drawText = function(pText, pTextStyle) {
+  Canvas.prototype.drawText = function(pText, pStyle) {
     this._syncMatrix();
-    this.records.push(
-      {
-        type: 'text',
-        text: pText,
-        style: pTextStyle
+    var tFont = pStyle.font,
+        tDoScale = function (pXScale, pYScale) {
+            this.matrix.scale(pXScale, pYScale);
+            this._syncMatrix();
+          },
+        tDoTranslate = function (pX, pY) {
+            this.matrix.translate(pX, pY);
+            this._syncMatrix();
+          };
+
+    if (tFont.system) {
+      // Draw using system font.
+      this.records.push({
+          type: 'text',
+          text: pText,
+          style: pStyle
+        });
+    } else {
+      // Draw using glyph data.
+      var tCharCode, tGlyph,
+          tFontScale = tFont.height / 1024,
+          tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin;
+
+      // Set the scale.
+      tDoScale.call(this, tFontScale, tFontScale);
+      // Iterate on each char.
+      for (var i = 0, il = pText.length; i < il; i++) {
+        tCharCode = pText.charCodeAt(i);
+        tGlyph = tFont.getGlyph(tCharCode);
+        // Set the glyph's position.
+        tDoTranslate.call(this, tXPos, tYPos);
+        // Set the glyph's record.
+        this.records.concat(tGlyph.data);
+        // Calculate the glyph's position.
+        tXPos += tGlyph.advance;
       }
-    );
+    }
   };
 
   /**
