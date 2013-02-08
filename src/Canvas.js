@@ -8,7 +8,7 @@
 (function(global) {
 
   var benri = global.benri;
-  var Matrix = benri.geometry.Matrix2D;
+  var Matrix2D = benri.geometry.Matrix2D;
   var Path = benri.geometry.Path;
   var Point = benri.geometry.Point;
   var Rect = benri.geometry.Rect;
@@ -26,6 +26,9 @@
    * @param {number} pHeight The height of the canvas.
    */
   function Canvas(pWidth, pHeight) {
+    // Finalizes the matrix support.
+    Matrix2D.initExtention(this);
+
     /**
      * The width of this Canvas in pixels.
      * @type {number}
@@ -37,12 +40,6 @@
      * @type {number}
      */
     this.height = pHeight;
-
-    /**
-     * The transformation matrix of this Canvas.
-     * @type {benri.geometry.Matrix2D}
-     */
-    this.matrix = new Matrix();
 
     /**
      * The stack used in save and restore calls.
@@ -86,6 +83,9 @@
    * @type {function(new:benri.draw.Surface)}
    */
   Canvas.defaultSurface = null;
+
+  // Extends this Canvas to support Matrix functions.
+  Matrix2D.extend(Canvas.prototype);
 
   /**
    * Sets the surface for this Canvas

@@ -9,6 +9,7 @@
 
   var document = global.document;
   var benri = global.benri;
+  var Uniform = benri.draw.Uniform;
 
   var mStyleHandlerClasses = [];
   var mStyleHandlers = [];
@@ -30,6 +31,7 @@
 
       this.records = [];
       this.drawFunction = null;
+      this.hasUniforms = false;
       this.layers = [];
     }
 
@@ -45,10 +47,26 @@
       tCanvas.height = pHeight;
     };
 
+    function checkForUniforms(pRecords) {
+      var i, il, k;
+      var tRecord;
+
+      for (i = 0, il = pRecords.length; i < il; i++) {
+        tRecord = pRecords[i];
+        for (k in tRecord) {
+          if (tRecord[k] instanceof Uniform) {
+            return true;
+          }
+        }
+      }
+    }
+
     HTMLCanvasSurface.prototype.addRecords = function(pRecords) {
       if (this.drawFunction !== null) {
         this.drawFunction = null;
       }
+
+      this.hasUniforms = checkForUniforms(pRecords);
 
       this.records = this.records.concat(pRecords);
     };
@@ -56,17 +74,36 @@
     HTMLCanvasSurface.prototype.clearRecords = function() {
       this.records = [];
       this.drawFunction = null;
+      this.hasUniforms = false;
       this.resources = [];
     };
 
     HTMLCanvasSurface.prototype.flush = function() {
-      // TODO: Make this MUCH more efficient
-      if (this.drawFunction === null) {
-        this.generateDrawFunction();
-      }
+      var tRecords;
+      var tRecord;
+      var tType;
+      var i, il;
+      var tHandlers;
 
-      if (this.drawFunction !== null) {
+      if (this.hasUniforms === true) {
+        if (this.drawFunction === null) {
+          this.generateDrawFunction();
+        }
+
         this.drawFunction(this.context);
+      } else {
+        tRecords = this.records;
+        tHandlers = HTMLCanvasSurface.recordHandlers;
+        this.resources = [];
+
+        for (i = 0, il = tRecords.length; i < il; i++) {
+          tRecord = tRecords[i];
+          tType = tRecord.type;
+
+          if (tType in tHandlers) {
+            tHandlers[tType].call(this, tRecord, false, null);
+          }
+        }
       }
     };
 
@@ -90,142 +127,291 @@
         tType = tRecord.type;
 
         if (tType in tHandlers) {
-          tHandlers[tType].call(this, tRecord, tCode);
+          tHandlers[tType].call(this, tRecord, true, tCode);
         }
       }
 
       this.drawFunction = new Function('c', tCode.join('\n'));
     };
 
+    HTMLCanvasSurface.prototype.resource = function(pResource) {
+      var tResources = this.resources;
+      var tIndex = tResources.indexOf(pResource);
+
+      if (tIndex === -1) {
+        tIndex = pResources.push(pResource) - 1;
+      }
+
+      return 'this.resources[' + tIndex + ']';
+    };
+
     return HTMLCanvasSurface;
   })(benri.draw.Surface);
 
-  function getResourceIndex(pResources, pResource) {
-    var tIndex = pResources.indexOf(pResource);
-    if (tIndex !== -1) {
-      return tIndex;
-    }
-
-    return pResources.push(pResource) - 1;
-  }
 
   HTMLCanvasSurface.recordHandlers = {
-    matrix: function(pRecord, pCode) {
+    matrix: function(pRecord, pCompiledMode, pCode) {
       var tMatrix = pRecord.matrix;
-      pCode.push('c.setTransform(' +
-        tMatrix.a + ',' +
-        tMatrix.b + ',' +
-        tMatrix.c + ',' +
-        tMatrix.d + ',' +
-        tMatrix.e + ',' +
-        tMatrix.f + ');'
-      );
+
+      if (pCompiledMode) {
+        if (tMatrix instanceof Uniform) {
+          pCode.push('var m = ' + this.resource(tMatrix) + '.value;');
+          pCode.push('c.setTransform(m.a,m.b,m.c,m.d,m.e,m.f);');
+        } else {
+          pCode.push('c.setTransform(' +
+            tMatrix.a + ',' +
+            tMatrix.b + ',' +
+            tMatrix.c + ',' +
+            tMatrix.d + ',' +
+            tMatrix.e + ',' +
+            tMatrix.f + ');'
+          );
+        }
+      } else {
+        this.context.setTransform(
+          tMatrix.a,
+          tMatrix.b,
+          tMatrix.c,
+          tMatrix.d,
+          tMatrix.e,
+          tMatrix.f
+        );
+      }
     },
 
-    move: function(pRecord, pCode) {
+    move: function(pRecord, pCompiledMode, pCode) {
       var tPoint = pRecord.point;
-      pCode.push('c.moveTo(' + tPoint.x + ',' + tPoint.y + ');');
+
+      if (pCompiledMode) {
+        if (tPoint instanceof Uniform) {
+          pCode.push('var p = ' + this.resource(tPoint) + '.value;');
+          pCode.push('c.moveTo(p.x, p.y);');
+        } else {
+          pCode.push('c.moveTo(' + tPoint.x + ',' + tPoint.y + ');');
+        }
+      } else {
+        this.context.moveTo(tPoint.x, tPoint.y);
+      }
     },
 
-    line: function(pRecord, pCode) {
+    line: function(pRecord, pCompiledMode, pCode) {
       var tPoint = pRecord.point;
-      pCode.push('c.lineTo(' + tPoint.x + ',' + tPoint.y + ');');
+
+      if (pCompiledMode) {
+        if (tPoint instanceof Uniform) {
+          pCode.push('var p = ' + this.resource(tPoint) + '.value;');
+          pCode.push('c.lineTo(p.x, p.y);');
+        } else {
+          pCode.push('c.lineTo(' + tPoint.x + ',' + tPoint.y + ');');
+        }
+      } else {
+        this.context.lineTo(tPoint.x, tPoint.y);
+      }
     },
 
-    quadraticCurve: function(pRecord, pCode) {
+    quadraticCurve: function(pRecord, pCompiledMode, pCode) {
       var tControlPoint = pRecord.controlPoint;
       var tPoint = pRecord.point;
-      pCode.push('c.quadraticCurveTo(' + tControlPoint.x + ',' + tControlPoint.y + ',' + tPoint.x + ',' + tPoint.y + ');');
+
+      if (pCompiledMode) {
+        if (tPoint instanceof Uniform || tControlPoint instanceof Uniform) {
+          pCode.push('var cp = ' + this.resource(tControlPoint) + '.value;');
+          pCode.push('var p = ' + this.resource(tPoint) + '.value;');
+          pCode.push('c.quadraticCurveTo(cp.x, cp.y, p.x, p.y);');
+        } else {
+          pCode.push('c.quadraticCurveTo(' + tControlPoint.x + ',' + tControlPoint.y + ',' + tPoint.x + ',' + tPoint.y + ');');
+        }
+      } else {
+        this.context.quadraticCurveTo(tControlPoint.x, tControlPoint.y, tPoint.x, tPoint.y);
+      }
     },
 
-    path: function(pRecord, pCode) {
-      pCode.push('c.beginPath();');
+    path: function(pRecord, pCompiledMode, pCode) {
+      if (pCompiledMode) {
+        pCode.push('c.beginPath();');
+      } else {
+        this.context.beginPath();
+      }
     },
 
-    fastBitmap: function(pRecord, pCode) {
-      var tPoint = pRecord.point;
-      handleStyle(this, pRecord.style, 'drawImage(this.resources[' + getResourceIndex(this.resources, pRecord.bitmap) + '],' + tPoint.x + ',' + tPoint.y + ')', pRecord.bitmap, pCode);
+    fastBitmap: function(pRecord, pCompiledMode, pCode) {
+      handleStyle(this, pRecord.style, pRecord, drawImage, pCompiledMode, pCode);
     },
 
-    bitmap: function(pRecord, pCode) {
+    bitmap: function(pRecord, pCompiledMode, pCode) {
       throw Error('Not Implemented');
     },
 
-    stroke: function(pRecord, pCode) {
-      handleStyle(this, pRecord.style, 'stroke()', 'strokeStyle', pCode);
+    stroke: function(pRecord, pCompiledMode, pCode) {
+      handleStyle(this, pRecord.style, pRecord, stroke, pCompiledMode, pCode);
     },
 
-    fill: function(pRecord, pCode) {
-      handleStyle(this, pRecord.style, 'fill()', 'fillStyle', pCode);
+    fill: function(pRecord, pCompiledMode, pCode) {
+      handleStyle(this, pRecord.style, pRecord, fill, pCompiledMode, pCode);
     },
 
-    text: function(pRecord, pCode) {
-      var tText = pRecord.text;
-      handleStyle(this, pRecord.style, 'c.fillText(this.resources[' + getResourceIndex(this.resources, tText) + '])', 'fillStyle', pCode);
+    text: function(pRecord, pCompiledMode, pCode) {
+      //var tText = pRecord.text;
+      //handleStyle(this, pRecord.style, 'c.fillText(this.resources[' + getResourceIndex(this.resources, tText) + '])', 'fillStyle', pCode);
     },
 
-    clearColor: function(pRecord, pCode) {
-      pCode.push('c.clearRect(0,0,' + this.width + ',' + this.height + ');');
-      pCode.push('c.fillStyle = "' + pRecord.color.toCSSString() + '";');
-      pCode.push('c.fillRect(0,0,' + this.width + ',' + this.height + ');');
+    clearColor: function(pRecord, pCompiledMode, pCode) {
+      var tWidth = this.width;
+      var tHeight = this.height;
+      var tColor = pRecord.color;
+      var tContext;
+
+      if (pCompiledMode) {
+        pCode.push('c.clearRect(0,0,' + this.width + ',' + this.height + ');');
+
+        if (tColor instanceof Uniform) {
+          pCode.push('c.fillStyle = ' + this.resource(tColor) + '.value;');
+        } else {
+          pCode.push('c.fillStyle = "' + tColor.toCSSString() + '";');
+        }
+
+        pCode.push('c.fillRect(0,0,' + this.width + ',' + this.height + ');');
+      } else {
+        tContext = this.context;
+        tContext.clearRect(0, 0, tWidth, tHeight);
+        tContext.fillStyle = tColor.toCSSString();
+        tContext.fillRect(0, 0, tWidth, tHeight);
+      }
     },
 
-    layer: function(pRecord, pCode) {
-      pCode.push('this.layers.push(c);');
-      pCode.push('c = document.createElement(\'canvas\').getContext(\'2d\');');
-      pCode.push('c.canvas.width = this.width;');
-      pCode.push('c.canvas.height = this.height;');
-
+    layer: function(pRecord, pCompiledMode, pCode) {
       var tMatrix = pRecord.matrix;
-      pCode.push('c.setTransform(' +
-        tMatrix.a + ',' +
-        tMatrix.b + ',' +
-        tMatrix.c + ',' +
-        tMatrix.d + ',' +
-        tMatrix.e + ',' +
-        tMatrix.f + ');'
-      );
+      var tContext;
+
+      if (pCompiledMode) {
+        pCode.push('this.layers.push(c);');
+        pCode.push('c = document.createElement(\'canvas\').getContext(\'2d\');');
+        pCode.push('c.canvas.width = this.width;');
+        pCode.push('c.canvas.height = this.height;');
+
+        var tMatrix = pRecord.matrix;
+        pCode.push('c.setTransform(' +
+          tMatrix.a + ',' +
+          tMatrix.b + ',' +
+          tMatrix.c + ',' +
+          tMatrix.d + ',' +
+          tMatrix.e + ',' +
+          tMatrix.f + ');'
+        );
+      } else {
+        tContext = this.context;
+        this.layers.push(tContext);
+        this.context = tContext = document.createElement('canvas').getContext('2d');
+        tContext.canvas.width = this.width;
+        tContext.canvas.height = this.height;
+
+        tContext.setTransform(
+          tMatrix.a,
+          tMatrix.b,
+          tMatrix.c,
+          tMatrix.d,
+          tMatrix.e,
+          tMatrix.f
+        );
+      }
     },
 
-    endLayer: function(pRecord, pCode) {
-      pCode.push('var lc = c;');
-      pCode.push('c = this.layers.pop();');
-      pCode.push('c.drawImage(lc.canvas, 0, 0);');
-      pCode.push('lc = null;');
+    endLayer: function(pRecord, pCompiledMode, pCode) {
+      if (pCompiledMode) {
+        pCode.push('var lc = c;');
+        pCode.push('c = this.layers.pop();');
+        pCode.push('c.drawImage(lc.canvas, 0, 0);');
+        pCode.push('lc = null;');
+      } else {
+        var tLayerContext = this.context;
+        var tContext = this.context = this.layers.pop();
+        tContext.drawImage(tLayerContext.canvas, 0, 0);
+      }
     }
   };
 
-  function handleStyle(pSurface, pStyle, pDrawCommand, pStyleProperty, pCode) {
+
+  function drawImage(pSurface, pRecord, pCompiledMode, pCode) {
+    var tPoint = pRecord.point;
+    var tBitmap = pRecord.bitmap;
+
+    if (pCompiledMode) {
+      if (tPoint instanceof Uniform || tBitmap instanceof Uniform) {
+        pCode.push('var p = ' + this.resource(tPoint) + '.value;');
+        pCode.push('c.drawImage(' + this.resource(tBitmap) + '.value,p.x,p.y);');
+      } else {
+        pCode.push('c.drawImage(' + pSurface.resource(tBitmap) + ',' + tPoint.x + ',' + tPoint.y + ');');
+      }
+    } else {
+      pSurface.context.drawImage(tBitmap, tPoint.x, tPoint.y);
+    }
+  }
+
+  function fill(pSurface, pRecord, pCompiledMode, pCode) {
+    if (pCompiledMode) {
+      pCode.push('c.fill();');
+    } else {
+      pSurface.context.fill();
+    }
+  }
+
+  function stroke(pSurface, pRecord, pCompiledMode, pCode) {
+    if (pCompiledMode) {
+      pCode.push('c.stroke();');
+    } else {
+      pSurface.context.stroke();
+    }
+  }
+
+
+  function handleStyle(pSurface, pStyle, pRecord, pFunction, pCompiledMode, pCode) {
     var tShader;
+    var tStyleMode;
     var tIndex = mStyleHandlerClasses.indexOf(pStyle.constructor);
 
     if (tIndex !== -1) {
-      mStyleHandlers[tIndex](pSurface, pStyle, pCode);
+      mStyleHandlers[tIndex](pSurface, pStyle, pCompiledMode, pCode);
     } else {
       console.warn('No HTMLCanvasSurface handler for style: ' + pStyle);
     }
 
-    if (!pStyle.shader) {
-      if (typeof pStyleProperty === 'string') {
-        pCode.push('c.' + pStyleProperty + ' = \'red\';');
-      }
-
-      pCode.push('c.' + pDrawCommand  + ';');
-
-      return;
+    if (pFunction === fill) {
+      tStyleMode = 'fill';
+    } else if (pFunction === stroke) {
+      tStyleMode = 'stroke';
+    } else {
+      tStyleMode = 'bitmap';
     }
 
     tShader = pStyle.shader;
 
+    if (!tShader) {
+      if (pFunction === fill) {
+        if (pCompiledMode) {
+          pCode.push('c.fillStyle = \'red\';');
+        } else {
+          pSurface.context.fillStyle = 'red';
+        }
+      } else if (pFunction === stroke) {
+        if (pCompiledMode) {
+          pCode.push('c.strokeStyle = \'red\';');
+        } else {
+          pSurface.context.strokeStyle = 'red';
+        }
+      }
+
+      pFunction(pSurface, pRecord, pCompiledMode, pCode);
+
+      return;
+    }
+
     tIndex = mShaderHandlerClasses.indexOf(tShader.constructor);
 
     if (tIndex !== -1) {
-      mShaderHandlers[tIndex](pSurface, tShader, pDrawCommand, pStyleProperty, pCode);
+      mShaderHandlers[tIndex](pSurface, tShader, pRecord, tStyleMode, pFunction, pCompiledMode, pCode);
     } else {
       console.warn('No HTMLCanvasSurface handler for shader: ' + tShader);
-      if (typeof pStyleProperty === 'string') {
-        pCode.push('c.' + pStyleProperty + ' = \'red\';');
-      }
+      pFunction(pSurface, pRecord, pCompiledMode, pCode);
     }
   }
 
