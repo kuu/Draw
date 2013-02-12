@@ -253,7 +253,7 @@
     } else {
       // Draw using glyph data.
       var tCharCode, tGlyph,
-          tFontScale = tFont.height / 1024,
+          tFontScale = pStyle.fontHeight / 1024,
           tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin;
 
       // Set the scale.
@@ -265,7 +265,7 @@
         // Set the glyph's position.
         tDoTranslate.call(this, tXPos, tYPos);
         // Set the glyph's record.
-        this.records.concat(tGlyph.data);
+        this.records = this.records.concat(tGlyph.data);
         // Calculate the glyph's position.
         tXPos += tGlyph.advance;
       }
