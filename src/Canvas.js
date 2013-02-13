@@ -15,6 +15,7 @@
   var Style = benri.draw.Style;
   var StrokeStyle = benri.draw.StrokeStyle;
   var TextStyle = benri.draw.TextStyle;
+  var Records = benri.draw.Records;
 
   benri.draw.Canvas = Canvas;
 
@@ -233,15 +234,7 @@
    */
   Canvas.prototype.drawText = function(pText, pStyle) {
     this._syncMatrix();
-    var tFont = pStyle.font,
-        tDoScale = function (pXScale, pYScale) {
-            this.matrix.scale(pXScale, pYScale);
-            this._syncMatrix();
-          },
-        tDoTranslate = function (pX, pY) {
-            this.matrix.translate(pX, pY);
-            this._syncMatrix();
-          };
+    var tFont = pStyle.font;
 
     if (tFont.system) {
       // Draw using system font.
@@ -253,19 +246,21 @@
     } else {
       // Draw using glyph data.
       var tCharCode, tGlyph,
-          tFontScale = pStyle.fontHeight / 1024,
+          tFontScale = pStyle.fontHeight / 1024 / 20,
           tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin;
 
-      // Set the scale.
-      tDoScale.call(this, tFontScale, tFontScale);
       // Iterate on each char.
       for (var i = 0, il = pText.length; i < il; i++) {
         tCharCode = pText.charCodeAt(i);
         tGlyph = tFont.getGlyph(tCharCode);
-        // Set the glyph's position.
-        tDoTranslate.call(this, tXPos, tYPos);
-        // Set the glyph's record.
-        this.records = this.records.concat(tGlyph.data);
+        tRecords = tGlyph.data;
+        // Applying patch to the glyph data.
+        tRecords.filter('layer matrix', function (pRecord) {
+            // Update transform matrix.
+            pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
+          });
+        // Append the glyph data to this.record
+        this.getRecords().concat(tRecords);
         // Calculate the glyph's position.
         tXPos += tGlyph.advance;
       }
@@ -384,6 +379,13 @@
   Canvas.prototype.restore = function() {
     var tState = this._stack.pop();
     this.matrix = tState.matrix;
+  };
+
+  /**
+   * Returns benri.draw.Records object.
+   */
+  Canvas.prototype.getRecords = function() {
+    return new Records(this.records);
   };
 
 }(this));

@@ -24,7 +24,7 @@
 
     /**
      * Glyph data.
-     * @type {Object}
+     * @type {benri.draw.Records}
      */
     this.data = null;
 
