@@ -34,6 +34,11 @@
      */
     this.advance = 0;
 
+    /**
+     * Actual bounds of this glyph.
+     * @type {benri.geometry.Rect}
+     */
+    this.rect = null;
   }
 
 }(this));

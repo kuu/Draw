@@ -272,7 +272,7 @@
         tRecords = tRecords.deepCopy();
         tThisRecords.concat(tRecords);
         // Calculate the glyph's position.
-        tXPos += (tGlyph.advance * tFontScale);
+        tXPos += Math.floor(tGlyph.advance * tFontScale);
       }
     }
   };
