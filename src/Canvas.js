@@ -245,9 +245,10 @@
         });
     } else {
       // Draw using glyph data.
-      var tCharCode, tGlyph,
-          tFontScale = pStyle.fontHeight / 1024 / 20,
-          tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin;
+      var tCharCode, tGlyph, tRecords,
+          tFontScale = pStyle.fontHeight / tFont.dimension,
+          tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin,
+          tThisRecords = new Records(this.records);
 
       // Iterate on each char.
       for (var i = 0, il = pText.length; i < il; i++) {
@@ -259,10 +260,19 @@
             // Update transform matrix.
             pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
           });
+        // Removing 'clear' records other than the first one.
+        // Otherwise, all the previous drawings are cleared.
+        if (i !== 0) {
+          tRecords.filter('clearColor', function (_, j, pRecords) {
+              // Remove record.
+              pRecords.splice(j, 1);
+            }, null, true);
+        }
         // Append the glyph data to this.record
-        this.getRecords().concat(tRecords);
+        tRecords = tRecords.deepCopy();
+        tThisRecords.concat(tRecords);
         // Calculate the glyph's position.
-        tXPos += tGlyph.advance;
+        tXPos += (tGlyph.advance * tFontScale);
       }
     }
   };
@@ -384,8 +394,12 @@
   /**
    * Returns benri.draw.Records object.
    */
-  Canvas.prototype.getRecords = function() {
-    return new Records(this.records);
+  Canvas.prototype.getRecords = function(pDontCopy) {
+    if (pDontCopy) {
+      return new Records(this.records);
+    } else {
+      return new Records(this.records).deepCopy();
+    }
   };
 
 }(this));

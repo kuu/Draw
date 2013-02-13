@@ -31,21 +31,54 @@
    *  The callback function is invoked with three arguments:
    *    pCallback(records[i], i, records)
    * @param {object} pContext An optional value on which pCallback is invoked.
+   * @param {boolean} pReverse If true, iterates records in reverse order.
    */
-  Records.prototype.filter = function(pType, pCallback, pContext) {
+  Records.prototype.filter = function(pType, pCallback, pContext, pReverse) {
 
     var tTypes = pType.split(' '),
-        tRecords = this._data, tRecord,
-        tContext = pContext || this;
+        tRecords = this._data,
+        tContext = pContext || this,
+        tDoFilter = function (pRecord, pTypes, pIndex) {
+            for (var i = 0, il = pTypes.length; i < il; i++)
+              if (pRecord.type === pTypes[i])
+                pCallback.call(tContext, pRecord, pIndex, tRecords);
+          };
+
+    if (pReverse) {
+      for (var i = tRecords.length; i--;) {
+        tDoFilter(tRecords[i], tTypes, i);
+      }
+    } else {
+      for (var i = 0, il = tRecords.length; i < il; i++) {
+        tDoFilter(tRecords[i], tTypes, i);
+      }
+    }
+  };
+
+  /**
+   * Make a deep copy of this object.
+   * @return {benri.draw.Records} Copied object.
+   *    If the record's member has clone() method, it is called to create a copy.
+   */
+  Records.prototype.deepCopy = function() {
+
+    var tRecords = this._data, tRecord, tProperty,
+        tNewRecord, tNewRecords = [];
 
     for (var i = 0, il = tRecords.length; i < il; i++) {
       tRecord = tRecords[i];
-      for (var j = 0, jl = tTypes.length; j < jl; j++) {
-        if (tRecord.type === tTypes[j]) {
-          pCallback.call(tContext, tRecord, i, tRecords);
+      tNewRecord = {};
+      for (var k in tRecord) {
+        tProperty = tRecord[k];
+        if (tProperty.clone && typeof tProperty.clone === 'function') {
+          tNewRecord[k] = tProperty.clone();
+        } else {
+          tNewRecord[k] = tProperty;
         }
       }
+      tNewRecords.push(tNewRecord);
     }
+    return new Records(tNewRecords);
   };
 
   /**
