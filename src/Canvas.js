@@ -254,6 +254,7 @@
       for (var i = 0, il = pText.length; i < il; i++) {
         tCharCode = pText.charCodeAt(i);
         tGlyph = tFont.getGlyph(tCharCode);
+        if (!tGlyph) continue;
         tRecords = tGlyph.data;
         // Applying patch to the glyph data.
         tRecords.filter('layer matrix', function (pRecord) {
