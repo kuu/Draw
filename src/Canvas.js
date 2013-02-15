@@ -257,7 +257,7 @@
         if (!tGlyph) continue;
         tRecords = tGlyph.data;
         // Applying patch to the glyph data.
-        tRecords.filter('layer matrix', function (pRecord) {
+        tRecords.filter('matrix', function (pRecord) {
             // Update transform matrix.
             pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
           });
