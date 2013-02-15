@@ -153,7 +153,7 @@
     var tBitmap = pShader.bitmap;
 
     if (pCompiledMode) {
-      pCode.push('c.' + pStyleMode + 'Style = c.createPattern(' + pSurface.resource(tBitmap) + '.value, \'' + tRepeat + '\')');
+      pCode.push('c.' + pStyleMode + 'Style = c.createPattern(' + pSurface.resource(tBitmap) + ', \'' + tRepeat + '\')');
       pCode.push('c.setTransform(' +
         tMatrix.a + ',' +
         tMatrix.b + ',' +
@@ -306,7 +306,7 @@
       pCode.push('tc.canvas.height = ' + tBitmap.height + ';');
       pCode.push('tc.drawImage(' + pSurface.resource(tBitmap) + ',0,0);');
       pCode.push('tc.globalCompositeOperation = \'destination-in\';');
-      pCode.push('tc.drawImage(this.resources[' + pSurface.resource(pShader.bitmap) + ',0,0);');
+      pCode.push('tc.drawImage(' + pSurface.resource(pShader.bitmap) + ',0,0);');
       pCode.push('c.drawImage(tc.canvas,0,0);');
       pCode.push('tc = null;');
     } else {

@@ -358,16 +358,19 @@
   Canvas.prototype.enterLayer = function(pRect) {
     this._syncMatrix();
 
+    this._layerStates.push({
+      matrix: this.matrix.clone(),
+      lastMatrix: this._lastMatrix.clone()
+    });
+
+    this.matrix.identity();
+    this._lastMatrix.identity();
+
     // TODO: Not handling this Rect yet. Need to implement 100%.
 
     this.records.push({
       type: 'layer',
-      rect: pRect || new Rect(new Point(0, 0), this.width, this.height),
-      matrix: this.matrix
-    });
-
-    this._layerStates.push({
-      matrix: this.matrix.clone()
+      rect: pRect || new Rect(new Point(0, 0), this.width, this.height)
     });
   };
 
@@ -378,6 +381,7 @@
   Canvas.prototype.leaveLayer = function() {
     var tState = this._layerStates.pop();
     this.matrix = tState.matrix;
+    this._lastMatrix = tState.lastMatrix;
 
     this.records.push({
       type: 'endLayer'

@@ -59,6 +59,8 @@
           }
         }
       }
+
+      return false;
     }
 
     HTMLCanvasSurface.prototype.addRecords = function(pRecords) {
@@ -67,6 +69,7 @@
       }
 
       this.hasUniforms = checkForUniforms(pRecords);
+      this.hasUniforms = true;
 
       this.records = this.records.concat(pRecords);
     };
@@ -139,7 +142,7 @@
       var tIndex = tResources.indexOf(pResource);
 
       if (tIndex === -1) {
-        tIndex = pResources.push(pResource) - 1;
+        tIndex = tResources.push(pResource) - 1;
       }
 
       return 'this.resources[' + tIndex + ']';
@@ -288,31 +291,12 @@
         pCode.push('c = document.createElement(\'canvas\').getContext(\'2d\');');
         pCode.push('c.canvas.width = this.width;');
         pCode.push('c.canvas.height = this.height;');
-
-        var tMatrix = pRecord.matrix;
-        pCode.push('c.setTransform(' +
-          tMatrix.a + ',' +
-          tMatrix.b + ',' +
-          tMatrix.c + ',' +
-          tMatrix.d + ',' +
-          tMatrix.e + ',' +
-          tMatrix.f + ');'
-        );
       } else {
         tContext = this.context;
         this.layers.push(tContext);
         this.context = tContext = document.createElement('canvas').getContext('2d');
         tContext.canvas.width = this.width;
         tContext.canvas.height = this.height;
-
-        tContext.setTransform(
-          tMatrix.a,
-          tMatrix.b,
-          tMatrix.c,
-          tMatrix.d,
-          tMatrix.e,
-          tMatrix.f
-        );
       }
     },
 
