@@ -24,6 +24,12 @@
     this.name = '';
 
     /**
+     * The size of the glyph's imaginary square, e.g. EM square.
+     * @type {number}
+     */
+    this.dimension = 1024;
+
+    /**
      * Font ascent.
      * @type {number}
      */
