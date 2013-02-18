@@ -18,6 +18,12 @@
       pSuper.call(this);
 
       /**
+       * Color
+       * @type {benri.draw.Font}
+       */
+      this.font = pFont;
+
+      /**
        * Font
        * @type {benri.draw.Font}
        */
@@ -36,10 +42,10 @@
       this.leftMargin = 0;
 
       /**
-       * Right margin.
+       * Max width.
        * @type {number}
        */
-      this.rightMargin = 0;
+      this.maxWidth= 0;
 
       /**
        * Top margin.
@@ -48,16 +54,16 @@
       this.topMargin = 0;
 
       /**
-       * Bottom margin.
+       * Max height.
        * @type {number}
        */
-      this.bottomMargin = 0;
+      this.maxHeight = 0;
 
       /**
        * Align.
        * @type {string} 'left'/'right'/'center'
        */
-      this.align = 0;
+      this.align = '';
 
       /**
        * Wrap.
