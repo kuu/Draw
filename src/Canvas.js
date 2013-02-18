@@ -231,10 +231,19 @@
    * Draws text to the Canvas.
    * @param  {string} pText The text to draw.
    * @param  {benri.draw.TextStyle} pStyle  The Style to use to draw the text.
+   * @param  {boolean} pClear Whether to clear canvas before drawing.
    */
-  Canvas.prototype.drawText = function(pText, pStyle) {
+  Canvas.prototype.drawText = function(pText, pStyle, pClear) {
     this._syncMatrix();
     var tFont = pStyle.font;
+
+    // Clear canvas.
+    if (pClear) {
+      this.records.push({
+          type: 'clearColor',
+          color: new benri.draw.Color(0, 0, 0, 0)
+        });
+    }
 
     if (tFont.system) {
       // Draw using system font.
@@ -261,14 +270,6 @@
             // Update transform matrix.
             pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
           });
-        // Removing 'clear' records other than the first one.
-        // Otherwise, all the previous drawings are cleared.
-        if (i !== 0) {
-          tRecords.filter('clearColor', function (_, j, pRecords) {
-              // Remove record.
-              pRecords.splice(j, 1);
-            }, null, true);
-        }
         // Append the glyph data to this.record
         tRecords = tRecords.deepCopy();
         tThisRecords.concat(tRecords);
