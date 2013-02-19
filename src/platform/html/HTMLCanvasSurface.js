@@ -69,7 +69,6 @@
       }
 
       this.hasUniforms = checkForUniforms(pRecords);
-      this.hasUniforms = true;
 
       this.records = this.records.concat(pRecords);
     };
@@ -254,8 +253,87 @@
     },
 
     text: function(pRecord, pCompiledMode, pCode) {
-      //var tText = pRecord.text;
-      //handleStyle(this, pRecord.style, 'c.fillText(this.resources[' + getResourceIndex(this.resources, tText) + '])', 'fillStyle', pCode);
+      var tText = pRecord.text;
+      var tStyle = pRecord.style;
+      var tFont = tStyle.font;
+      var tColor = tStyle.color;
+      var tContext = this.context;
+      var tLeading = tFont.leading * tStyle.fontHeight / 1024;
+      var tStringList, tString = pRecord.text + '';
+      var tFontString = (tFont.italic ? 'italic ' : '') + (tFont.bold ? 'bold ' : '') + tStyle.fontHeight + 'px ' + tFont.name;
+      var tYPos = 0, tWidth = tStyle.maxWidth;
+      var tXPos = tStyle.leftMargin + (tStyle.align === 'left' ? 0 : (tStyle.align === 'center' ? tWidth / 2 : tWidth));
+      var i, il;
+
+      // CnvasRenderingContext2D.fillText() forcibly converts all the spaces into ASCII spaces.
+      // However, the space characters are sometimes used for making visual space.
+      // So, here we do such the conversion more precise way so that we can preserve the original layout.
+      //tContext.save();
+      tContext.font = tFontString;
+      var tSpaceWidth = tContext.measureText('\u0020').width;
+      var tIdeographicSpaceWidth = tContext.measureText('\u3000').width;
+      var tSpaceMultRate = (tSpaceWidth && tIdeographicSpaceWidth ? tIdeographicSpaceWidth / tSpaceWidth : 4);
+
+      // This function takes an arbitrary number of the ideographic spaces (U+3000,)
+      // and returns how many ASCII spaces (U+0020) are needed for filling the same on-screen area
+      // that the ideographic spaces would have ocupied.
+      var howManySpaces = function (pString) {
+        return Math.round(pString.length * tSpaceMultRate);
+      };
+      tString = tString.replace(/\u3000+/g, function (pMatched) {
+          // Generating sucessive SPACE characters.
+          return Array(howManySpaces(pMatched) + 1).join('\u0020');
+        });
+      //tContext.restore();
+
+      // Build the string list.
+      if (tStyle.multiline) {
+        // Fold the text.
+        var tCharCode, tStringBuffer = '';
+        tStringList = [];
+        for (i = 0, il = tString.length; i < il; i++) {
+          tCharCode = tString.charCodeAt(i);
+          if (tCharCode === 10 || tCharCode === 13) {
+            tStringList.push(tStringBuffer);
+            tStringBuffer = '';
+            continue;
+          }
+          tStringBuffer += tString[i];
+          if (i === il - 1
+            || (tContext.measureText(tStringBuffer + tString[i + 1]).width > tWidth)) {
+            tStringList.push(tStringBuffer);
+            tStringBuffer = '';
+          }
+        }
+      } else {
+        tStringList = [tString.replace(/[\n\r]/g, '')];
+      }
+
+      if (pCompiledMode) {
+        pCode.push(
+          'c.fillStyle = \'' + tColor.toCSSString() + '\';',
+          'c.font = \'' + tFontString + '\';',
+          'c.textBaseline = \'top\';',
+          'c.textAlign = \'' + tStyle.align + '\';'
+        );
+        for (i = 0, il = tStringList.length; i < il; i++) {
+          tString = tStringList[i].replace(/(?!\\)'/, '\\\'');
+          pCode.push(
+            'c.fillText(\'' + tString + '\', ' + tXPos + ', ' + tYPos + ', ' + tWidth + ');'
+          );
+          tYPos += (tLeading + tStyle.fontHeight);
+        }
+      } else {
+        tContext.fillStyle = tColor.toCSSString();
+        tContext.font = tFontString;
+        tContext.textBaseline = 'top';
+        tContext.textAlign = tStyle.align;
+        for (i = 0, il = tStringList.length; i < il; i++) {
+          tString = tStringList[i];
+          tContext.fillText(tString, tXPos, tYPos, tWidth);
+          tYPos += (tLeading + tStyle.fontHeight);
+        }
+      }
     },
 
     clearColor: function(pRecord, pCompiledMode, pCode) {
