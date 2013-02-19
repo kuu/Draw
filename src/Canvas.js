@@ -261,14 +261,6 @@
             // Update transform matrix.
             pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
           });
-        // Removing 'clear' records other than the first one.
-        // Otherwise, all the previous drawings are cleared.
-        if (i !== 0) {
-          tRecords.filter('clearColor', function (_, j, pRecords) {
-              // Remove record.
-              pRecords.splice(j, 1);
-            }, null, true);
-        }
         // Append the glyph data to this.record
         tRecords = tRecords.deepCopy();
         tThisRecords.concat(tRecords);
