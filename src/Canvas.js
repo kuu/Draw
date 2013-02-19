@@ -231,19 +231,10 @@
    * Draws text to the Canvas.
    * @param  {string} pText The text to draw.
    * @param  {benri.draw.TextStyle} pStyle  The Style to use to draw the text.
-   * @param  {boolean} pClear Whether to clear canvas before drawing.
    */
-  Canvas.prototype.drawText = function(pText, pStyle, pClear) {
+  Canvas.prototype.drawText = function(pText, pStyle) {
     this._syncMatrix();
     var tFont = pStyle.font;
-
-    // Clear canvas.
-    if (pClear) {
-      this.records.push({
-          type: 'clearColor',
-          color: new benri.draw.Color(0, 0, 0, 0)
-        });
-    }
 
     if (tFont.system) {
       // Draw using system font.
