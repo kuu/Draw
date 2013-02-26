@@ -45,7 +45,13 @@
        * Max width.
        * @type {number}
        */
-      this.maxWidth= 0;
+      this.maxWidth = 0;
+
+      /**
+       * Actual text width (for glyphs)
+       * @type {number}
+       */
+      this.textWidth = 0;
 
       /**
        * Top margin.
