@@ -250,6 +250,14 @@
           tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin,
           tThisRecords = new Records(this.records);
 
+      // Adjust the alignment
+      if (pStyle.align === 'center') {
+        tXPos = (pStyle.maxWidth -  pStyle.textWidth) / 2;
+      } else if (pStyle.align === 'right') {
+        tXPos = pStyle.maxWidth -  pStyle.textWidth;
+      }
+      tXPos = tXPos < 0 ? 0 : tXPos;
+
       // Iterate on each char.
       for (var i = 0, il = pText.length; i < il; i++) {
         tCharCode = pText.charCodeAt(i);
