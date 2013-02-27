@@ -248,6 +248,8 @@
       var tCharCode, tGlyph, tRecords,
           tFontScale = pStyle.fontHeight / tFont.dimension,
           tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin,
+          tTextColor = pStyle.getColor(),
+          tTextColorValue = tTextColor.valueOf(),
           tThisRecords = new Records(this.records);
 
       // Adjust the alignment
@@ -268,6 +270,13 @@
         tRecords.filter('matrix', function (pRecord) {
             // Update transform matrix.
             pRecord.matrix.fill([tFontScale, 0, 0, tFontScale, tXPos, tYPos]);
+          });
+        tRecords.filter('fill stroke', function (pRecord) {
+            // Update color.
+            var tGlyphColor = pRecord.style.getColor();
+            if (tGlyphColor.valueOf() !== tTextColorValue) {
+              pRecord.style.setColor(tTextColor);
+            }
           });
         // Append the glyph data to this.record
         tRecords = tRecords.deepCopy();

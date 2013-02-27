@@ -256,7 +256,7 @@
       var tText = pRecord.text;
       var tStyle = pRecord.style;
       var tFont = tStyle.font;
-      var tColor = tStyle.color;
+      var tColor = tStyle.getColor();
       var tContext = this.context;
       var tLeading = tFont.leading * tStyle.fontHeight / 1024;
       var tStringList, tString = pRecord.text + '';

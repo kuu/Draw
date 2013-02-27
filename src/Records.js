@@ -63,20 +63,23 @@
   Records.prototype.deepCopy = function() {
 
     var tRecords = this._data, tRecord, tProperty,
-        tNewRecord, tNewRecords = [];
+        tNewRecord, tNewRecords = [],
+        tDoCopy = function (pObj) {
+          if (typeof pObj !== 'object') {
+            return pObj;
+          }
+          if (pObj.clone && typeof pObj.clone === 'function') {
+            return pObj.clone();
+          }
+          var tNewObj = {};
+          for (var k in pObj) {
+            tNewObj[k] = tDoCopy(pObj[k]);
+          }
+          return tNewObj;
+        };
 
     for (var i = 0, il = tRecords.length; i < il; i++) {
-      tRecord = tRecords[i];
-      tNewRecord = {};
-      for (var k in tRecord) {
-        tProperty = tRecord[k];
-        if (tProperty.clone && typeof tProperty.clone === 'function') {
-          tNewRecord[k] = tProperty.clone();
-        } else {
-          tNewRecord[k] = tProperty;
-        }
-      }
-      tNewRecords.push(tNewRecord);
+      tNewRecords.push(tDoCopy(tRecords[i]));
     }
     return new Records(tNewRecords);
   };

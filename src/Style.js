@@ -55,11 +55,22 @@
    * @return {benri.draw.Color|null} The Color if the shader is a ColorShader. Null otherwise
    */
   Style.prototype.getColor = function() {
-    if (this.shader.constructor !== Color) {
+    if (this.shader.constructor !== ColorShader) {
       return null;
     }
 
-    return this.shader.color;
+    return this.shader.color.clone();
+  }
+
+  /**
+   * Gets the copy of this Style.
+   * @return {benri.draw.Style} Copy object
+   */
+  Style.prototype.clone = function() {
+    var tCopy = new Style();
+    tCopy.setColor(this.getColor());
+    tCopy.compositor = this.compositor;
+    return tCopy;
   }
 
   global.benri.draw.Style = Style;
