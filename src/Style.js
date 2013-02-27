@@ -55,7 +55,7 @@
    * @return {benri.draw.Color|null} The Color if the shader is a ColorShader. Null otherwise
    */
   Style.prototype.getColor = function() {
-    if (this.shader.constructor !== Color) {
+    if (this.shader.constructor !== ColorShader) {
       return null;
     }
 
