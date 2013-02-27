@@ -59,7 +59,18 @@
       return null;
     }
 
-    return this.shader.color;
+    return this.shader.color.clone();
+  }
+
+  /**
+   * Gets the copy of this Style.
+   * @return {benri.draw.Style} Copy object
+   */
+  Style.prototype.clone = function() {
+    var tCopy = new Style();
+    tCopy.setColor(this.getColor());
+    tCopy.compositor = this.compositor;
+    return tCopy;
   }
 
   global.benri.draw.Style = Style;

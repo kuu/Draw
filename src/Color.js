@@ -92,6 +92,16 @@
       ];
     };
 
+    /**
+     * Gets the copy of this object.
+     * @return {benri.draw.Color} The copy object.
+     */
+    Color.prototype.clone = function() {
+      var tCopy = new Color(0, 0, 0, 0);
+      tCopy.value = this.value;
+      return tCopy;
+    };
+
     return Color;
   })(Number);
 
