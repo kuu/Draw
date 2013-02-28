@@ -247,7 +247,7 @@
       // Draw using glyph data.
       var tCharCode, tGlyph, tRecords,
           tFontScale = pStyle.fontHeight / tFont.dimension,
-          tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin,
+          tXPos = pStyle.leftMargin, tYPos = pStyle.topMargin, tInitialXPos,
           tTextColor = pStyle.getColor(),
           tTextColorValue = tTextColor.valueOf(),
           tThisRecords = new Records(this.records);
@@ -259,10 +259,16 @@
         tXPos = pStyle.maxWidth -  pStyle.textWidth;
       }
       tXPos = tXPos < 0 ? 0 : tXPos;
+      tInitialXPos = tXPos;
 
       // Iterate on each char.
       for (var i = 0, il = pText.length; i < il; i++) {
         tCharCode = pText.charCodeAt(i);
+        if (tCharCode === 10 || tCharCode === 13) {
+          tXPos = tInitialXPos;
+          tYPos += pStyle.fontHeight + (tFont.leading ? tFont.leading * tFontScale : 0);
+          continue;
+        }
         tGlyph = tFont.getGlyph(tCharCode);
         if (!tGlyph) continue;
         tRecords = tGlyph.data;
