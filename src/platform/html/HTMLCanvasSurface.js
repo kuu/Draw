@@ -286,27 +286,23 @@
         });
       //tContext.restore();
 
-      // Build the string list.
-      if (tStyle.multiline) {
-        // Fold the text.
-        var tCharCode, tStringBuffer = '';
-        tStringList = [];
-        for (i = 0, il = tString.length; i < il; i++) {
-          tCharCode = tString.charCodeAt(i);
-          if (tCharCode === 10 || tCharCode === 13) {
-            tStringList.push(tStringBuffer);
-            tStringBuffer = '';
-            continue;
-          }
-          tStringBuffer += tString[i];
-          if (i === il - 1
-            || (tContext.measureText(tStringBuffer + tString[i + 1]).width > tWidth)) {
-            tStringList.push(tStringBuffer);
-            tStringBuffer = '';
-          }
+      // Fold the text.
+      var tCharCode, tStringBuffer = '';
+      tStringList = [];
+      for (i = 0, il = tString.length; i < il; i++) {
+        tCharCode = tString.charCodeAt(i);
+        // We take account of line breaks even when TextStyle.multiline is true.
+        if (tCharCode === 10 || tCharCode === 13) {
+          tStringList.push(tStringBuffer);
+          tStringBuffer = '';
+          continue;
         }
-      } else {
-        tStringList = [tString.replace(/[\n\r]/g, '')];
+        tStringBuffer += tString[i];
+        if (i === il - 1
+          || (tContext.measureText(tStringBuffer + tString[i + 1]).width > tWidth)) {
+          tStringList.push(tStringBuffer);
+          tStringBuffer = '';
+        }
       }
 
       if (pCompiledMode) {
